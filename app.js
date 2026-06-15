@@ -143,7 +143,7 @@ function buildEmail(data) {
     lines.push("  " + mark + " " + s.name);
   }
   lines.push("");
-  lines.push("Track it live: " + window.location.origin + "/?sub=" + data.submissionNumber);
+  lines.push("Track it live: " + window.location.origin + window.location.pathname + "?sub=" + data.submissionNumber);
 
   return { subject: subject, body: lines.join("\n") };
 }
@@ -185,9 +185,14 @@ function wireShareButton(data) {
 
   result.innerHTML = '<div class="result-card"><p class="muted-note">Loading submission ' + esc(sub) + '…</p></div>';
 
+  // When this page belongs to a specific card shop, page.js injects its name so
+  // the API uses that shop's PSA token.
+  const tracker = (window.__TRACKER__ && window.__TRACKER__.name) ? window.__TRACKER__.name : "";
+
   let data;
   try {
-    const resp = await fetch("/api/track?sub=" + encodeURIComponent(sub));
+    const resp = await fetch("/api/track?sub=" + encodeURIComponent(sub) +
+      (tracker ? "&tracker=" + encodeURIComponent(tracker) : ""));
     data = await resp.json();
   } catch (e) {
     result.innerHTML = '<div class="error-msg">Network error: ' + esc(String(e)) + '</div>';

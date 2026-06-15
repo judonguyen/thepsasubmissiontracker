@@ -3,6 +3,8 @@
 // The PSA token is read from process.env.PSA_TOKEN, so it is never exposed
 // to visitors or committed to the repo.
 
+const { getJSON } = require("../lib/store.js");
+
 const PSA_BASE = "https://api.psacard.com/publicapi";
 
 // Friendly display names + descriptions for each PSA progress step.
@@ -18,10 +20,24 @@ const STEP_META = {
   Shipped:       { name: "Shipped",             desc: "Order has shipped back to the customer" }
 };
 
-async function psaGet(path) {
+// Pick the right PSA token: a registered card shop's own token when the page
+// passed ?tracker=<name>, otherwise the site-wide default (PSA_TOKEN env var).
+async function resolveToken(req) {
+  const t = (req.query && req.query.tracker) ? String(req.query.tracker).toLowerCase().trim() : "";
+  if (t) {
+    let cfg = null;
+    try { cfg = await getJSON("psatracker:" + t); } catch (e) { return { error: "Storage unavailable." }; }
+    if (cfg && cfg.token) return { token: String(cfg.token).trim() };
+    return { error: "This tracker does not exist." };
+  }
+  const envTok = (process.env.PSA_TOKEN || "").trim();
+  if (envTok) return { token: envTok };
+  return { error: "Server is not configured with a PSA token." };
+}
+
+async function psaGet(path, token) {
   const url = PSA_BASE + path;
   try {
-    const token = (process.env.PSA_TOKEN || "").trim();
     const resp = await fetch(url, {
       headers: {
         Authorization: "bearer " + token,
@@ -46,13 +62,15 @@ module.exports = async function handler(req, res) {
   if (!/^[0-9]+$/.test(sub)) {
     return res.status(400).json({ ok: false, error: "Please enter a valid numeric submission number." });
   }
-  if (!process.env.PSA_TOKEN) {
-    return res.status(500).json({ ok: false, error: "Server is not configured with a PSA token." });
+
+  const tok = await resolveToken(req);
+  if (tok.error) {
+    return res.status(tok.error === "This tracker does not exist." ? 404 : 500).json({ ok: false, error: tok.error });
   }
 
   // NOTE: PSA has two endpoints — GetProgress expects an ORDER number, while
   // GetSubmissionProgress expects a SUBMISSION number (what users type here).
-  const orderRes = await psaGet("/order/GetSubmissionProgress/" + encodeURIComponent(sub));
+  const orderRes = await psaGet("/order/GetSubmissionProgress/" + encodeURIComponent(sub), tok.token);
   if (!orderRes.ok) {
     let msg;
     if (orderRes.status === 404) {
