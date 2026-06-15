@@ -1,0 +1,22 @@
+# OS files
+Thumbs.db
+.DS_Store
+
+# Editor folders
+.vscode/
+.idea/
+
+# Dependencies (if you add Node later)
+node_modules/
+
+# Logs
+*.log
+
+# Secrets / local env — NEVER commit these
+.env
+.env.local
+.env*.local
+
+.vercel
+
+.vercel
