@@ -26,13 +26,15 @@ async function resolveToken(req) {
   const t = (req.query && req.query.tracker) ? String(req.query.tracker).toLowerCase().trim() : "";
   if (t) {
     let cfg = null;
-    try { cfg = await getJSON("psatracker:" + t); } catch (e) { return { error: "Storage unavailable." }; }
-    if (cfg && cfg.token) return { token: String(cfg.token).trim() };
-    return { error: "This tracker does not exist." };
+    try { cfg = await getJSON("psatracker:" + t); } catch (e) { return { error: "Storage unavailable.", status: 500 }; }
+    if (!cfg) return { error: "This tracker does not exist.", status: 404 };
+    if (cfg.active === false) return { error: "This tracker is currently inactive.", status: 403 };
+    if (cfg.token) return { token: String(cfg.token).trim() };
+    return { error: "This tracker has no PSA token set.", status: 500 };
   }
   const envTok = (process.env.PSA_TOKEN || "").trim();
   if (envTok) return { token: envTok };
-  return { error: "Server is not configured with a PSA token." };
+  return { error: "Server is not configured with a PSA token.", status: 500 };
 }
 
 async function psaGet(path, token) {
@@ -65,7 +67,7 @@ module.exports = async function handler(req, res) {
 
   const tok = await resolveToken(req);
   if (tok.error) {
-    return res.status(tok.error === "This tracker does not exist." ? 404 : 500).json({ ok: false, error: tok.error });
+    return res.status(tok.status || 500).json({ ok: false, error: tok.error });
   }
 
   // NOTE: PSA has two endpoints — GetProgress expects an ORDER number, while

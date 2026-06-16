@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<title>Manage PSA Trackers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600;700&family=Righteous&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+<style>
+    .tracker-card { position: relative; }
+    .tracker-card .row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .tracker-card .row .field { flex: 1; min-width: 200px; margin-bottom: 12px; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+    .btn-secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #e8eef4; }
+    .btn-danger { background: #fff; color: #b91c1c; border: 1px solid rgba(220,38,38,0.4); }
+    .btn-danger:hover { background: rgba(220,38,38,0.06); }
+    .badge-active, .badge-inactive {
+        font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 99px;
+        text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .badge-active { background: rgba(22,163,74,0.12); color: #15803d; }
+    .badge-inactive { background: rgba(156,163,175,0.2); color: #6b7280; }
+    .toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .toggle input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+    .card-msg { font-size: 13px; margin-top: 8px; }
+    .section-title { font-size: 18px; font-weight: 700; margin: 28px 0 12px; }
+    .open-link { font-size: 13px; color: var(--accent); text-decoration: none; font-family: ui-monospace, Consolas, monospace; }
+</style>
+</head>
+<body>
+<div class="container">
+
+    <header>
+        <h1>Manage Card Shop Trackers</h1>
+        <p>Create, edit, activate/deactivate, or remove each shop's PSA tracker</p>
+    </header>
+
+    <!-- Password gate -->
+    <div class="form-card" id="gate">
+        <div class="field">
+            <label for="adminPw">Admin password</label>
+            <input type="password" id="adminPw" autocomplete="off" placeholder="Enter to manage trackers" />
+        </div>
+        <button type="button" class="full-btn" id="loadBtn">Unlock</button>
+        <div id="gateMsg"></div>
+    </div>
+
+    <!-- Console (hidden until unlocked) -->
+    <div id="console" style="display:none">
+        <div class="section-title">➕ Create a new tracker</div>
+        <div id="newCardSlot"></div>
+
+        <div class="section-title">📋 Existing trackers <span id="count" class="muted-note"></span></div>
+        <div id="list"></div>
+    </div>
+
+    <footer>PSA Submission Tracker — admin</footer>
+
+</div>
+<script src="/manage.js"></script>
+</body>
+</html>

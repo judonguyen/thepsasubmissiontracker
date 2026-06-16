@@ -28,8 +28,24 @@ function notFoundHtml(name) {
     '<header><h1>Tracker not found</h1>' +
     '<p>There is no PSA tracker named "' + esc(name) + '".</p></header>' +
     '<div class="result-card"><p class="muted-note">Double-check the link, or ' +
-    '<a href="/create">create a tracker</a>.</p></div>' +
+    '<a href="/manage">manage trackers</a>.</p></div>' +
     '<footer>PSA Submission Tracker</footer></div></body></html>';
+}
+
+function inactiveHtml(cfg) {
+  const site = safeUrl(cfg.siteUrl);
+  const logo = safeUrl(cfg.logoUrl) || "/logo.jpeg";
+  let logoImg = '<img class="brand-logo" src="' + esc(logo) + '" alt="' + esc(cfg.name) + '" />';
+  if (site) logoImg = '<a class="brand-link" href="' + esc(site) + '" target="_blank" rel="noopener">' + logoImg + '</a>';
+  return '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" />' +
+    '<meta name="viewport" content="width=device-width, initial-scale=1.0" />' +
+    '<title>' + esc(cfg.name) + ' — temporarily unavailable</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600;700&family=Righteous&display=swap" rel="stylesheet" />' +
+    '<link rel="stylesheet" href="/styles.css" /></head><body><div class="container">' +
+    '<header>' + logoImg + '<h1>PSA Submission Tracker</h1></header>' +
+    '<div class="result-card"><p class="muted-note">This tracker is temporarily unavailable. ' +
+    'Please check back later.</p></div>' +
+    '<footer>' + esc(cfg.name) + '</footer></div></body></html>';
 }
 
 function pageHtml(cfg) {
@@ -86,6 +102,7 @@ module.exports = async function handler(req, res) {
   let cfg = null;
   try { cfg = await getJSON("psatracker:" + name.toLowerCase()); } catch (e) { cfg = null; }
   if (!cfg) return res.status(404).send(notFoundHtml(name));
+  if (cfg.active === false) return res.status(200).send(inactiveHtml(cfg));
 
   return res.status(200).send(pageHtml(cfg));
 };
