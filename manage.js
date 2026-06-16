@@ -21,12 +21,25 @@ async function api(payload) {
   return resp.json();
 }
 
+// QR code (GIF data URL) for a tracker's public page — generated entirely in
+// the browser, so it's a downloadable image with no external calls.
+function qrDataUrl(text) {
+  try {
+    const qr = qrcode(0, "M");   // type 0 = auto-size, error correction "M"
+    qr.addData(text);
+    qr.make();
+    return qr.createDataURL(5, 12);  // cellSize px, quiet-zone margin px
+  } catch (e) { return ""; }
+}
+
 // Build one editable card. `t` is null for the "create new" card.
 function cardHtml(t) {
   const isNew = !t;
   const name = isNew ? "" : t.name;
   const active = isNew ? true : t.active;
   const idSuffix = isNew ? "new" : ("e_" + name.toLowerCase());
+  const absUrl = isNew ? "" : (window.location.origin + "/" + name);
+  const qr = isNew ? "" : qrDataUrl(absUrl);
 
   let badge = "";
   if (!isNew) badge = active
@@ -61,6 +74,15 @@ function cardHtml(t) {
         (isNew ? '' : '<button type="button" class="btn-danger f-delete">Delete</button>') +
         '<button type="button" class="f-save">' + (isNew ? "Create tracker" : "Save changes") + '</button>' +
       '</div>' +
+      (isNew || !qr ? '' :
+        '<div class="qr-block">' +
+          '<img class="qr-img" src="' + qr + '" alt="QR code for ' + esc(name) + '" />' +
+          '<div class="qr-side">' +
+            '<div class="qr-cap">📱 Customer QR code</div>' +
+            '<div class="muted-note" style="font-size:12px;word-break:break-all">Scan to open ' + esc(absUrl) + '</div>' +
+            '<a class="qr-dl" href="' + qr + '" download="' + esc(name) + '-tracker-qr.gif">⬇ Download QR</a>' +
+          '</div>' +
+        '</div>') +
       '<div class="card-msg" id="msg_' + idSuffix + '"></div>' +
     '</div>';
 }

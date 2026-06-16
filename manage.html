@@ -29,6 +29,12 @@
     .card-msg { font-size: 13px; margin-top: 8px; }
     .section-title { font-size: 18px; font-weight: 700; margin: 28px 0 12px; }
     .open-link { font-size: 13px; color: var(--accent); text-decoration: none; font-family: ui-monospace, Consolas, monospace; }
+    .qr-block { display: flex; gap: 16px; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .qr-img { width: 124px; height: 124px; border: 1px solid var(--border); border-radius: 8px; background: #fff; image-rendering: pixelated; }
+    .qr-side { flex: 1; min-width: 180px; }
+    .qr-cap { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+    .qr-dl { display: inline-block; margin-top: 10px; padding: 8px 14px; background: var(--accent); color: #fff; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; }
+    .qr-dl:hover { background: #1877b0; }
 </style>
 </head>
 <body>
@@ -61,6 +67,7 @@
     <footer>PSA Submission Tracker — admin</footer>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script src="/manage.js"></script>
 </body>
 </html>
