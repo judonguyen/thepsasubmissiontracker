@@ -45,16 +45,24 @@ function cardHtml(t) {
   if (!isNew) badge = active
     ? '<span class="badge-active">Active</span>'
     : '<span class="badge-inactive">Inactive</span>';
+  const subBadge = (!isNew && t.hasSubscription) ? '<span class="badge-sub">💳 Subscriber</span>' : '';
 
   let openLink = "";
   if (!isNew) openLink = '<a class="open-link" href="/' + esc(name) + '" target="_blank" rel="noopener">/' + esc(name) + ' ↗</a>';
+
+  const billingBlock = (!isNew && t.hasSubscription) ?
+    ('<div class="billing-row">' +
+      '<button type="button" class="btn-secondary f-portal">💳 Manage billing</button>' +
+      '<button type="button" class="btn-danger f-cancel">🚫 Cancel subscription</button>' +
+      (t.email ? '<span class="muted-note" style="align-self:center">' + esc(t.email) + '</span>' : '') +
+    '</div>') : '';
 
   const tokenPlaceholder = isNew ? "This shop's PSA public API token" : "Leave blank to keep the current token";
 
   return '' +
     '<div class="form-card tracker-card" data-original="' + esc(name) + '">' +
       '<div class="btn-row" style="justify-content:space-between;margin-bottom:8px">' +
-        '<div class="btn-row">' + badge + openLink + '</div>' +
+        '<div class="btn-row">' + badge + subBadge + openLink + '</div>' +
       '</div>' +
       '<div class="row">' +
         '<div class="field"><label>Tracker Name</label>' +
@@ -83,6 +91,7 @@ function cardHtml(t) {
             '<a class="qr-dl" href="' + qr + '" download="' + esc(name) + '-tracker-qr.gif">⬇ Download QR</a>' +
           '</div>' +
         '</div>') +
+      billingBlock +
       '<div class="card-msg" id="msg_' + idSuffix + '"></div>' +
     '</div>';
 }
@@ -129,6 +138,39 @@ function wireCard(cardEl) {
         return;
       }
       await refresh();
+    });
+  }
+
+  const portalBtn = get(".f-portal");
+  if (portalBtn) {
+    portalBtn.addEventListener("click", async function () {
+      this.disabled = true;
+      msg.innerHTML = '<span class="muted-note">Opening Stripe billing portal…</span>';
+      const data = await api({ action: "portal", name: original });
+      this.disabled = false;
+      if (!data || !data.ok || !data.url) {
+        msg.innerHTML = '<span style="color:#b91c1c">' + esc((data && data.error) || "Could not open billing portal.") + '</span>';
+        return;
+      }
+      msg.innerHTML = "";
+      window.open(data.url, "_blank", "noopener");
+    });
+  }
+
+  const cancelBtn = get(".f-cancel");
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", async function () {
+      if (!window.confirm('Cancel the subscription for "' + original + '"? It stays live until the end of the paid period, then turns off automatically.')) return;
+      this.disabled = true;
+      msg.innerHTML = '<span class="muted-note">Cancelling…</span>';
+      const data = await api({ action: "cancel", name: original });
+      this.disabled = false;
+      if (!data || !data.ok) {
+        msg.innerHTML = '<span style="color:#b91c1c">' + esc((data && data.error) || "Cancel failed.") + '</span>';
+        return;
+      }
+      const when = data.cancelAt ? new Date(data.cancelAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
+      msg.innerHTML = '<span style="color:#15803d">Subscription set to cancel' + (when ? " on " + esc(when) : " at period end") + '. The page stays live until then.</span>';
     });
   }
 }

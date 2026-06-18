@@ -6,6 +6,7 @@
 // whether a token is set. On "save", a blank token means "keep the current one".
 
 const { cmd, getJSON, setJSON } = require("../lib/store.js");
+const { createPortalSession, createPortalConfiguration, cancelAtPeriodEnd } = require("../lib/stripe.js");
 
 function str(v) { return (v === null || v === undefined) ? "" : String(v); }
 const NAME_RE = /^[A-Za-z0-9_-]{2,40}$/;
@@ -23,6 +24,8 @@ async function listTrackers() {
       siteUrl: cfg.siteUrl || "",
       active: cfg.active !== false,   // older records without the flag count as active
       hasToken: !!cfg.token,
+      hasSubscription: !!cfg.stripeSubscriptionId,   // show billing controls for subscribers
+      email: cfg.email || "",
       created: cfg.created || "",
       updated: cfg.updated || ""
     });
@@ -56,6 +59,54 @@ module.exports = async function handler(req, res) {
       await cmd(["DEL", keyFor(name)]);
       if (cfg && cfg.stripeSubscriptionId) { try { await cmd(["DEL", "psasub:" + cfg.stripeSubscriptionId]); } catch (e) {} }
       return res.status(200).json({ ok: true });
+    }
+
+    // Open the Stripe billing portal for this tracker's customer (admin acting
+    // on the shop's behalf): update card, view invoices, cancel.
+    if (action === "portal") {
+      const name = str(body.name).trim();
+      if (!NAME_RE.test(name)) return res.status(400).json({ ok: false, error: "Invalid tracker name." });
+      const cfg = await getJSON(keyFor(name));
+      if (!cfg || !cfg.stripeCustomerId) return res.status(400).json({ ok: false, error: "This tracker has no Stripe customer (it's not a paid subscriber)." });
+      const proto = str(req.headers["x-forwarded-proto"]) || "https";
+      const returnUrl = proto + "://" + str(req.headers.host) + "/manage";
+      try {
+        const sess = await createPortalSession(cfg.stripeCustomerId, returnUrl);
+        return res.status(200).json({ ok: true, url: sess.url });
+      } catch (e) {
+        // First use in test mode needs a portal configuration — create a default and retry once.
+        if (/configuration/i.test(String(e.message || e))) {
+          try {
+            await createPortalConfiguration({
+              business_profile: { headline: "Manage your PSA Submission Tracker subscription" },
+              features: {
+                invoice_history: { enabled: true },
+                payment_method_update: { enabled: true },
+                customer_update: { enabled: true, allowed_updates: ["email", "address"] },
+                subscription_cancel: { enabled: true }
+              }
+            });
+            const sess = await createPortalSession(cfg.stripeCustomerId, returnUrl);
+            return res.status(200).json({ ok: true, url: sess.url });
+          } catch (e2) { return res.status(200).json({ ok: false, error: String(e2.message || e2) }); }
+        }
+        return res.status(200).json({ ok: false, error: String(e.message || e) });
+      }
+    }
+
+    // Cancel the subscription at period end (keeps the page live through the
+    // paid period; the webhook deactivates it when the subscription actually ends).
+    if (action === "cancel") {
+      const name = str(body.name).trim();
+      if (!NAME_RE.test(name)) return res.status(400).json({ ok: false, error: "Invalid tracker name." });
+      const cfg = await getJSON(keyFor(name));
+      if (!cfg || !cfg.stripeSubscriptionId) return res.status(400).json({ ok: false, error: "This tracker has no active subscription." });
+      try {
+        const sub = await cancelAtPeriodEnd(cfg.stripeSubscriptionId);
+        return res.status(200).json({ ok: true, cancelAt: sub.current_period_end ? sub.current_period_end * 1000 : null });
+      } catch (e) {
+        return res.status(200).json({ ok: false, error: String(e.message || e) });
+      }
     }
 
     if (action === "save") {
