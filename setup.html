@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Set up your PSA Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600;700&family=Righteous&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+<style>
+    .reserved { font-family: ui-monospace, Consolas, monospace; color: var(--accent); font-weight: 700; }
+    .copy-row { display: flex; gap: 8px; margin-top: 10px; }
+    .copy-row input { flex: 1; }
+</style>
+</head>
+<body>
+<div class="container">
+
+    <header>
+        <h1>Set up your tracker</h1>
+        <p>Payment received — let's get your page live</p>
+    </header>
+
+    <div id="gate" class="form-card"><div class="muted-note">Confirming your payment…</div></div>
+
+    <div id="setup" class="form-card" style="display:none">
+        <div class="ok-msg">✅ You're subscribed! Your page will be live at <span class="reserved" id="urlShow"></span></div>
+        <form id="setupForm" style="margin-top:16px">
+            <div class="field">
+                <label for="token">PSA Token</label>
+                <input type="text" id="token" autocomplete="off" placeholder="Your PSA public API token" />
+                <div class="hint">Stored securely on the server — never shown on your public page. (Get it from your PSA dashboard.)</div>
+            </div>
+            <div class="field">
+                <label for="logoUrl">Logo Image URL <span class="hint" style="display:inline">(optional)</span></label>
+                <input type="url" id="logoUrl" autocomplete="off" placeholder="https://yourshop.com/logo.png" />
+            </div>
+            <div class="field">
+                <label for="siteUrl">Your Website <span class="hint" style="display:inline">(optional)</span></label>
+                <input type="url" id="siteUrl" autocomplete="off" placeholder="https://yourshop.com" />
+            </div>
+            <button type="submit" class="full-btn" id="goLive">Launch my tracker 🚀</button>
+            <div id="msg"></div>
+        </form>
+    </div>
+
+    <div id="done" class="form-card" style="display:none"></div>
+
+    <footer>Powered by the PSA Submission Tracker</footer>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script src="/setup.js"></script>
+</body>
+</html>

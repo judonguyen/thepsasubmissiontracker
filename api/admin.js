@@ -52,7 +52,9 @@ module.exports = async function handler(req, res) {
     if (action === "delete") {
       const name = str(body.name).trim();
       if (!NAME_RE.test(name)) return res.status(400).json({ ok: false, error: "Invalid tracker name." });
+      const cfg = await getJSON(keyFor(name));
       await cmd(["DEL", keyFor(name)]);
+      if (cfg && cfg.stripeSubscriptionId) { try { await cmd(["DEL", "psasub:" + cfg.stripeSubscriptionId]); } catch (e) {} }
       return res.status(200).json({ ok: true });
     }
 
@@ -93,13 +95,19 @@ module.exports = async function handler(req, res) {
       const active = body.active === false ? false : true;
 
       const now = new Date().toISOString();
-      const cfg = {
+      // Preserve any extra fields (Stripe customer/subscription, plan, email)
+      // so an admin edit never breaks the billing linkage.
+      const cfg = Object.assign({}, existing || {}, {
         name: name, token: token, logoUrl: logoUrl, siteUrl: siteUrl, active: active,
         created: existing && existing.created ? existing.created : now,
         updated: now
-      };
+      });
       await setJSON(keyFor(name), cfg);
-      if (isRename) await cmd(["DEL", keyFor(original)]);
+      if (isRename) {
+        await cmd(["DEL", keyFor(original)]);
+        // Keep the subscription→name index pointing at the new name.
+        if (cfg.stripeSubscriptionId) { try { await cmd(["SET", "psasub:" + cfg.stripeSubscriptionId, name.toLowerCase()]); } catch (e) {} }
+      }
 
       const proto = str(req.headers["x-forwarded-proto"]) || "https";
       const host = str(req.headers.host);

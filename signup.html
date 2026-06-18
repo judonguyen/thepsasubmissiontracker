@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Get your own PSA Submission Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600;700&family=Righteous&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+<style>
+    .price { text-align: center; margin: 10px 0 20px; }
+    .price .amt { font-size: 38px; font-weight: 700; font-family: "Righteous", sans-serif; }
+    .price .per { color: var(--muted); font-size: 15px; }
+    .avail { font-size: 13px; margin-top: 6px; min-height: 18px; }
+    .avail.ok { color: #15803d; } .avail.no { color: #b91c1c; }
+    .url-pre { font-family: ui-monospace, Consolas, monospace; color: var(--accent); }
+    .perk { font-size: 14px; color: var(--text); margin: 4px 0; }
+    .perks { margin: 0 0 18px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+    <header>
+        <h1>Your own PSA Submission Tracker</h1>
+        <p>A branded grading-progress page for your card shop, at your own link</p>
+    </header>
+
+    <div class="form-card">
+        <div class="price" id="price"><span class="muted-note">Loading plan…</span></div>
+
+        <div class="perks">
+            <div class="perk">✓ Your own page at <span class="url-pre">/yourshopname</span></div>
+            <div class="perk">✓ Your logo &amp; website branding</div>
+            <div class="perk">✓ Customers track their PSA submissions in real time</div>
+            <div class="perk">✓ Cancel anytime</div>
+        </div>
+
+        <form id="signupForm">
+            <div class="field">
+                <label for="name">Choose your tracker name</label>
+                <input type="text" id="name" autocomplete="off" placeholder="e.g. SMPSportsCardsPlus" />
+                <div class="hint">Letters, numbers, hyphens or underscores — no spaces. Your page:
+                    <span class="url-pre" id="urlPreview">/yourshopname</span></div>
+                <div class="avail" id="avail"></div>
+            </div>
+            <div class="field">
+                <label for="email">Email <span class="hint" style="display:inline">(for your receipt)</span></label>
+                <input type="email" id="email" autocomplete="off" placeholder="you@shop.com" />
+            </div>
+            <button type="submit" class="full-btn" id="goBtn">Continue to secure checkout →</button>
+            <div id="msg"></div>
+            <div class="hint" style="text-align:center;margin-top:12px">🔒 Payments are handled securely by Stripe. After paying, you'll set up your PSA token &amp; branding.</div>
+        </form>
+    </div>
+
+    <footer>Powered by the PSA Submission Tracker</footer>
+
+</div>
+<script src="/signup.js"></script>
+</body>
+</html>
