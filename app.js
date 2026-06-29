@@ -24,6 +24,16 @@ function renderResult(data) {
 
   html += '<div class="result-card">';
 
+  // Note when the status is served from cache (saved earlier) or stale (shown
+  // because PSA was temporarily unavailable).
+  if (data.cached) {
+    const checked = data.fetchedAt ? new Date(data.fetchedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+    const msg = data.stale
+      ? ("⚠️ PSA is busy right now — showing the last saved status" + (checked ? " from " + checked : "") + ".")
+      : ("📅 Showing the saved status" + (checked ? " (checked " + checked + ")" : "") + " — refreshes periodically.");
+    html += '<div class="muted-note" style="background:#f4f8fb;border:1px solid #dbe6ef;border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:13px">' + msg + '</div>';
+  }
+
   // Header
   html += '<div class="result-header">';
   html += '<div>';
